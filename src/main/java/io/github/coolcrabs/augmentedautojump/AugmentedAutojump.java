@@ -23,9 +23,9 @@ public class AugmentedAutojump {
         World world = player.getEntityWorld();
         double bpt = Math.sqrt((dx * dx) + (dz * dz)); // Current speed in blocks per tick
         Box currentBox = player.getBoundingBox();
-        float yawDeg = -player.getYaw(0) * (float)(Math.PI / 180);
-        double yawDeltaX = MathHelper.sin(yawDeg);
-        double yawDeltaZ = MathHelper.cos(yawDeg);
+        float yawRad = -player.getYaw(0) * (float)(Math.PI / 180);
+        double yawDeltaX = MathHelper.sin(yawRad);
+        double yawDeltaZ = MathHelper.cos(yawRad);
         double predictionX = yawDeltaX * bpt * PREDICTION_MULT;
         double predictionZ = yawDeltaZ * bpt * PREDICTION_MULT;
         Box predictionBox = currentBox.offset(predictionX, 0, predictionZ);
@@ -44,8 +44,13 @@ public class AugmentedAutojump {
                     pos.set(i, j, k);
                     VoxelShape jumpTargetShape = world.getBlockState(pos).getCollisionShape(world, pos).offset(i, j, k);
                     double ydiff = jumpTargetShape.getMax(Axis.Y) - player.getY();
-                    if (ydiff > player.stepHeight + 0.001 && ydiff < jumpHeight && hasHeadSpace(player, currentBox, jumpHeight, pos)) {
-                        return true;
+                    if (ydiff > player.stepHeight + 0.001 && ydiff < jumpHeight) {
+                        double playerToBlockAngle = calcAngle(player.getX(), player.getZ(), i + 0.5, k + 0.5);
+                        double playerAngle = mcDeg2NormalDeg((yawRad * (-180 / Math.PI)));
+                        if (!hasHeadSpace(player, currentBox, jumpHeight, pos)) continue;
+                        if (Math.abs(angleDiff(playerToBlockAngle, playerAngle)) < 10) {
+                            return true;
+                        }
                     }
                 }
             }
@@ -74,5 +79,29 @@ public class AugmentedAutojump {
         }
 
         return true;
+    }
+
+    public static double mcDeg2NormalDeg(double a) {
+        a += 180;
+        while (a < 0) a += 360;
+        while (a > 360) a -= 360;
+        return a;
+    }
+
+    public static double calcAngle(double x, double y, double x1, double y1) {
+        return MathHelper.atan2(x - x1, y1 - y) * 180 / Math.PI + 180;
+    }
+
+    /**
+     * Gets the diffrence between 2 degree angles
+     * @param a 0 <= a <= 360
+     * @param b 0 <= b <= 360
+     * @return diffrence
+     */
+    public static double angleDiff(double a, double b) {
+        double difference = a - b;
+        while (difference < -180) difference += 360;
+        while (difference > 180) difference -= 360;
+        return difference;
     }
 }
