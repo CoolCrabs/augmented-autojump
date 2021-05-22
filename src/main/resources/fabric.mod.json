@@ -1,37 +1,28 @@
 {
   "schemaVersion": 1,
-  "id": "modid",
+  "id": "augmentedautojump",
   "version": "${version}",
 
-  "name": "Example Mod",
-  "description": "This is an example description! Tell everyone what your mod is about!",
+  "name": "Augmented Autojump",
+  "description": "Improves Autojump!",
   "authors": [
-    "Me!"
+    "CoolMineman"
   ],
   "contact": {
-    "homepage": "https://fabricmc.net/",
-    "sources": "https://github.com/FabricMC/fabric-example-mod"
+    "homepage": "https://github.com/CoolCrabs/augmented-autojump",
+    "sources": "https://github.com/CoolCrabs/augmented-autojump"
   },
 
   "license": "CC0-1.0",
   "icon": "assets/modid/icon.png",
 
-  "environment": "*",
-  "entrypoints": {
-    "main": [
-      "net.fabricmc.example.ExampleMod"
-    ]
-  },
+  "environment": "client",
+
   "mixins": [
-    "modid.mixins.json"
+    "augmentedautojump.mixins.json"
   ],
 
   "depends": {
-    "fabricloader": ">=0.7.4",
-    "fabric": "*",
-    "minecraft": "1.16.x"
-  },
-  "suggests": {
-    "another-mod": "*"
+    "fabricloader": ">=0.7.4"
   }
 }
