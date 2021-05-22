@@ -21,7 +21,7 @@ public class AugmentedAutojump {
             jumpHeight += (float)(player.getStatusEffect(StatusEffects.JUMP_BOOST).getAmplifier() + 1) * 0.75F;
         }
         World world = player.getEntityWorld();
-        double bpt = Math.sqrt((dx * dx) + (dz * dz)); // Current speed in blocks per tick
+        double bpt = MathHelper.clamp(Math.sqrt((dx * dx) + (dz * dz)), 0.1, 0.8); // Current speed in blocks per tick; Clamped to reasonable values for aproximating next location
         Box currentBox = player.getBoundingBox();
         float yawRad = -player.getYaw(0) * (float)(Math.PI / 180);
         double yawDeltaX = MathHelper.sin(yawRad);
