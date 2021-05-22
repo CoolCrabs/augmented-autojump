@@ -48,7 +48,7 @@ public class AugmentedAutojump {
                         double playerToBlockAngle = calcAngle(player.getX(), player.getZ(), i + 0.5, k + 0.5);
                         double playerAngle = mcDeg2NormalDeg((yawRad * (-180 / Math.PI)));
                         if (!hasHeadSpace(player, currentBox, jumpHeight, pos)) continue;
-                        if (Math.abs(angleDiff(playerToBlockAngle, playerAngle)) < 10) {
+                        if (Math.abs(angleDiff(playerToBlockAngle, playerAngle)) < 10 || Math.floorMod((int)playerAngle, 90) < 10 || Math.floorMod((int)playerAngle, 90) > 80) {
                             return true;
                         }
                     }
