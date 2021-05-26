@@ -4,6 +4,7 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Direction.Axis;
 import net.minecraft.util.shape.VoxelShape;
@@ -21,7 +22,8 @@ public class AugmentedAutojump {
             jumpHeight += (float)(player.getStatusEffect(StatusEffects.JUMP_BOOST).getAmplifier() + 1) * 0.75F;
         }
         World world = player.getEntityWorld();
-        double bpt = MathHelper.clamp(Math.sqrt((dx * dx) + (dz * dz)), 0.1, 0.8); // Current speed in blocks per tick; Clamped to reasonable values for aproximating next location
+        double bpt = MathHelper.clamp(Math.sqrt((dx * dx) + (dz * dz)), 0.001, 0.8); // Current speed in blocks per tick; Clamped to reasonable values for aproximating next location
+        if (bpt < 0.2) bpt *= 0.7; // Fixes ice + iron bar edge case
         Box currentBox = player.getBoundingBox();
         float yawRad = -player.getYaw(0) * (float)(Math.PI / 180);
         double yawDeltaX = MathHelper.sin(yawRad);
@@ -43,10 +45,11 @@ public class AugmentedAutojump {
                 for (int k = minZ; k <= maxZ; k++) {
                     pos.set(i, j, k);
                     VoxelShape jumpTargetShape = world.getBlockState(pos).getCollisionShape(world, pos).offset(i, j, k);
-                    double ydiff = jumpTargetShape.getMax(Axis.Y) - player.getY();
+                    if (jumpTargetShape.isEmpty()) continue;
+                    double playerAngle = mcDeg2NormalDeg((yawRad * (-180 / Math.PI)));
+                    double ydiff = getCollisionY(angleToDirection(playerAngle).getOpposite(), jumpTargetShape) - player.getY();
                     if (ydiff > player.stepHeight + 0.001 && ydiff < jumpHeight) {
                         double playerToBlockAngle = calcAngle(player.getX(), player.getZ(), i + 0.5, k + 0.5);
-                        double playerAngle = mcDeg2NormalDeg((yawRad * (-180 / Math.PI)));
                         if (!hasHeadSpace(player, currentBox, jumpHeight, pos)) continue;
                         if (Math.abs(angleDiff(playerToBlockAngle, playerAngle)) < 10 || Math.floorMod((int)playerAngle, 90) < 10 || Math.floorMod((int)playerAngle, 90) > 80) {
                             return true;
@@ -79,6 +82,42 @@ public class AugmentedAutojump {
         }
 
         return true;
+    }
+
+    public static double getCollisionY(Direction side, VoxelShape shape) {
+        boolean positiveDirection = side.getOffsetX() + side.getOffsetZ() > 0;
+        double maxDir = Double.NaN;
+        double maxY = Double.NaN;
+        for (Box box : shape.getBoundingBoxes()) {
+            if (box.maxY > maxY || Double.isNaN(maxDir)) {
+                if (positiveDirection) {
+                    if (Double.isNaN(maxDir) || box.getMax(side.getAxis()) >= maxDir) {
+                        maxDir = box.getMax(side.getAxis());
+                        maxY = box.maxY;
+                    }
+                } else {
+                    if (Double.isNaN(maxDir) || box.getMin(side.getAxis()) <= maxDir) {
+                        maxDir = box.getMin(side.getAxis());
+                        maxY = box.maxY;
+                    }
+                }
+            }
+        }
+        return maxY;
+    }
+
+    public static Direction angleToDirection(double deg) {
+        if (deg > 0 && deg < 45) {
+            return Direction.NORTH;
+        } else if (deg >= 45 && deg < 135) {
+            return Direction.EAST;
+        } else if (deg >= 135 && deg < 225) {
+            return Direction.SOUTH;
+        } else if (deg >= 225 && deg < 315) {
+            return Direction.WEST;
+        } else {
+            return Direction.NORTH;
+        }
     }
 
     public static double mcDeg2NormalDeg(double a) {
